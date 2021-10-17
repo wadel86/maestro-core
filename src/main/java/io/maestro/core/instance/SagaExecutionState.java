@@ -16,35 +16,44 @@ public class SagaExecutionState {
     }
 
     public void putInStartMode(){
+        if(!SagaState.CREATED.equals(this.state)){
+            throw new InconsistentSagaStateException
+                    ("In order to be started, a saga must be in CREATED state");
+        }
         this.pointer = 0;
         this.state = SagaState.EXECUTING;
     }
 
     public void putInTerminateMode(){
+        if(SagaState.CREATED.equals(this.state)
+                || SagaState.TERMINATED.equals(this.state) ){
+            throw new InconsistentSagaStateException
+                    ("In order to be terminated, a saga must be in EXECUTING or COMPENSATION state");
+        }
         this.state = SagaState.TERMINATED;
     }
 
     public void stepUp(){
-        if(SagaState.COMPENSATING.equals(this.state)){
+        if(!SagaState.EXECUTING.equals(this.state)){
             throw new InconsistentSagaStateException
-                    ("Saga is compensating, can't step up");
+                    ("Can't step up a non executing saga");
         }
         this.pointer += 1;
     }
 
     public void reverseToCompensation(){
-        if(SagaState.COMPENSATING.equals(this.state)){
+        if(!SagaState.EXECUTING.equals(this.state)){
             throw new InconsistentSagaStateException
-                    ("Saga is already in compensating state");
+                    ("Can't reverse a non executing saga");
         }
         this.pointer -= 1;
         this.state = SagaState.COMPENSATING;
     }
 
     public void stepDown(){
-        if(SagaState.EXECUTING.equals(this.state)){
+        if(!SagaState.COMPENSATING.equals(this.state)){
             throw new InconsistentSagaStateException
-                    ("Saga is executing, can't step down");
+                    ("Can't step down a non compensating saga");
         }
         this.pointer -= 1;
     }
