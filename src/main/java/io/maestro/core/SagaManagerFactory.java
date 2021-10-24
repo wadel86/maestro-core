@@ -17,7 +17,7 @@ public class SagaManagerFactory {
         this.replyConsumer = replyConsumer;
     }
 
-    public <Data> io.maestro.core.SagaManager<Data> createSagaManager(Saga<Data> saga) {
-        return new io.maestro.core.SagaManagerImpl<>(sagaDataGateway, commandProducer, replyConsumer, saga);
+    public <Data> SagaManager<Data> createSagaManager(Saga<Data> saga) {
+        return new SagaManagerImpl<>(sagaDataGateway, commandProducer, replyConsumer, saga);
     }
 }

@@ -15,7 +15,7 @@ public class SagaSerializedData {
         return new SagaSerializedData(sagaData.getClass().getName(), JsonMapper.toJson(sagaData));
     }
 
-    public <Data> Data deserializeData() {
+    public <Data> Data deserializeSagaData() {
         Class clasz = null;
         try {
             clasz = SagaSerializedData.class.getClassLoader().loadClass(className);
@@ -23,5 +23,13 @@ public class SagaSerializedData {
            throw new RuntimeException(e);
         }
         return (Data)JsonMapper.fromJson(json, clasz);
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public String getJson() {
+        return json;
     }
 }

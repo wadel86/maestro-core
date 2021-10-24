@@ -14,9 +14,12 @@ import java.util.function.Function;
 
 public class RemoteStepImpl<Data> implements RemoteStep<Data> {
 
-    private final Function<Data, CommandWithDestination> remoteInvocation;
+    private Function<Data, CommandWithDestination> remoteInvocation = null;
     private Map<String, BiConsumer<Data, Object>> replyHandlers;
     private Optional<Consumer<Data>> compensation;
+
+    public RemoteStepImpl() {
+    }
 
     public RemoteStepImpl
             (Function<Data, CommandWithDestination> remoteInvocation, Map<String, BiConsumer<Data, Object>> replyHandlers,

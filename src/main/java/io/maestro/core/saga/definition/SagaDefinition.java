@@ -1,5 +1,7 @@
 package io.maestro.core.saga.definition;
 
+import io.maestro.core.exception.InconsistentSagaStateException;
+import io.maestro.core.instance.SagaState;
 import io.maestro.core.saga.definition.step.LocalStep;
 import io.maestro.core.saga.definition.step.SagaStep;
 import io.maestro.core.instance.SagaInstance;
@@ -17,33 +19,47 @@ public class SagaDefinition<Data> {
     }
 
     public List<SagaStep<Data>> getNextSteps(SagaInstance sagaInstance){
-        List<SagaStep<Data>> startingSteps = new ArrayList<>();
-        int i = sagaInstance.getSagaExecutionState().getPointer();
-        while (i < steps.size()){
-            startingSteps.add(steps.get(i));
-            if(!(steps.get(i) instanceof LocalStep)){
+        if(!SagaState.EXECUTING.equals(sagaInstance.getSagaExecutionState().getState())){
+            throw new InconsistentSagaStateException
+                    ("Can't get next steps of none executing saga!");
+        }
+        List<SagaStep<Data>> nextSteps = new ArrayList<>();
+        int nextStepIndex = sagaInstance.getSagaExecutionState().getPointer();
+        while (nextStepIndex < steps.size()){
+            nextSteps.add(steps.get(nextStepIndex));
+            if(!(steps.get(nextStepIndex) instanceof LocalStep)){
                 break;
             }
-            i++;
+            nextStepIndex++;
         }
-        return startingSteps;
+        return nextSteps;
     }
 
     public List<SagaStep<Data>> getStepsToCompensate(SagaInstance sagaInstance){
+        if(!SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState())){
+            throw new InconsistentSagaStateException
+                    ("Can't get steps to compensate of a non compensating saga!");
+        }
         List<SagaStep<Data>> startingSteps = new ArrayList<>();
-        int i = sagaInstance.getSagaExecutionState().getPointer();
-        while (i > -1){
-            startingSteps.add(steps.get(i));
-            if(!(steps.get(i) instanceof LocalStep)){
-                break;
-            }
-            i--;
+        int previousStepIndex = sagaInstance.getSagaExecutionState().getPointer() - 1;
+        while (previousStepIndex > -1){
+            startingSteps.add(steps.get(previousStepIndex));
+            previousStepIndex--;
         }
         return startingSteps;
     }
 
     public SagaStep<Data> getStepInExecution(SagaInstance sagaInstance){
-        return null;
+        if(!SagaState.EXECUTING.equals(sagaInstance.getSagaExecutionState().getState())){
+            if(SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState()))
+            {
+                throw new InconsistentSagaStateException
+                        ("Saga is compensating, step by step execution is not allowed!");
+            }
+            throw new InconsistentSagaStateException
+                    ("Saga is not started yet, can't get step in execution!");
+        }
+        return steps.get(sagaInstance.getSagaExecutionState().getPointer());
     }
 
 

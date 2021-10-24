@@ -7,7 +7,7 @@ import io.maestro.core.saga.Saga;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SagaInstanceFactory {
-    private ConcurrentHashMap<Saga<?>, SagaManager<?>> sagaManagers = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Saga<?>, SagaManager<?>> sagaManagers;
     private final SagaManagerFactory sagaManagerFactory;
 
     public SagaInstanceFactory(SagaManagerFactory sagaManagerFactory) {

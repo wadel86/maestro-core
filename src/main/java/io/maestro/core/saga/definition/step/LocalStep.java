@@ -13,6 +13,9 @@ public class LocalStep<Data> implements SagaStep<Data> {
     private Optional<Consumer<Data>> compensation;
     private Map<String, Consumer<Data>> exceptionHandlers;
 
+    public LocalStep() {
+    }
+
     public LocalStep
             (Consumer<Data> localFunction,
              Optional<Consumer<Data>> compensation, Map<String,

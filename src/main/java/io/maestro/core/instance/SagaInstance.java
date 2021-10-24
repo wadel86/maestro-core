@@ -1,7 +1,5 @@
 package io.maestro.core.instance;
 
-import io.maestro.core.exception.InconsistentSagaStateException;
-
 public class SagaInstance {
     private String id;
     private String sagaType;
@@ -32,19 +30,10 @@ public class SagaInstance {
     }
 
     public void start(){
-        if(sagaExecutionState.getPointer() != -1){
-            throw new InconsistentSagaStateException
-                    ("Can't start an already started saga!");
-        }
         this.sagaExecutionState.putInStartMode();
     }
 
     public void terminate(){
-        if(!SagaState.EXECUTING.equals(sagaExecutionState.getState())
-                && !SagaState.COMPENSATING.equals(sagaExecutionState.getState())){
-            throw new InconsistentSagaStateException
-                    ("Can't terminates a non started saga!");
-        }
         this.sagaExecutionState.putInTerminateMode();
     }
 

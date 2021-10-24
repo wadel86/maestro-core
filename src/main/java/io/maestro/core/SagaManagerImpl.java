@@ -18,7 +18,7 @@ import io.maestro.core.reply.Message;
 import javax.annotation.PostConstruct;
 import java.util.List;
 
-public class SagaManagerImpl<Data> implements io.maestro.core.SagaManager<Data> {
+public class SagaManagerImpl<Data> implements SagaManager<Data> {
     private final SagaDataGateway sagaDataGateway;
     private final CommandProducer commandProducer;
     private final ReplyConsumer replyConsumer;
@@ -66,7 +66,7 @@ public class SagaManagerImpl<Data> implements io.maestro.core.SagaManager<Data> 
             String sagaId = message.getHeader("Saga-ID");
             String sagaType = message.getHeader("Saga-Type");
             SagaInstance sagaInstance = sagaDataGateway.findSaga(sagaId, sagaType);
-            Data sagaData = sagaInstance.getSerializedData().deserializeData();
+            Data sagaData = sagaInstance.getSerializedData().deserializeSagaData();
             StepOutcome<Data> stepOutcome = saga.handleReply(sagaInstance, sagaData, message);
             List<SagaStep<Data>> stepsToExecute;
             if(stepOutcome.isSuccessful()){
