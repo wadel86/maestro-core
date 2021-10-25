@@ -22,8 +22,9 @@ public class RemoteStepImpl<Data> implements RemoteStep<Data> {
     }
 
     public RemoteStepImpl
-            (Function<Data, CommandWithDestination> remoteInvocation, Map<String, BiConsumer<Data, Object>> replyHandlers,
-                      Optional<Consumer<Data>> compensation) {
+            (Function<Data, CommandWithDestination> remoteInvocation,
+             Optional<Consumer<Data>> compensation,
+             Map<String, BiConsumer<Data, Object>> replyHandlers) {
         this.remoteInvocation = remoteInvocation;
         this.replyHandlers = replyHandlers;
         this.compensation = compensation;

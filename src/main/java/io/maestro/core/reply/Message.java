@@ -7,6 +7,12 @@ public class Message {
     private Map<String, String> headers;
     private String payload;
 
+    public Message(String sagaType, Map<String, String> headers, String payload) {
+        this.sagaType = sagaType;
+        this.headers = headers;
+        this.payload = payload;
+    }
+
     public String getSagaType() {
         return sagaType;
     }

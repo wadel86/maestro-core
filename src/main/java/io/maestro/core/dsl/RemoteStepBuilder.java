@@ -35,12 +35,12 @@ public class RemoteStepBuilder<Data> {
     }
 
     public StepBuilder<Data> step() {
-        this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, replyHandlers, Optional.empty()));
+        this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, Optional.empty(), replyHandlers));
         return new StepBuilder<>(this.parent);
     }
 
     public SagaDefinition<Data> build() {
-        this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, replyHandlers, Optional.empty()));
+        this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, Optional.empty(), replyHandlers));
         return this.parent.build();
     }
 
