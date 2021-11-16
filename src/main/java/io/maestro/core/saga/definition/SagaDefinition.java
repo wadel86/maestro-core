@@ -1,10 +1,10 @@
 package io.maestro.core.saga.definition;
 
-import io.maestro.core.exception.InconsistentSagaStateException;
-import io.maestro.core.instance.SagaState;
+import io.maestro.common.exception.InconsistentSagaStateException;
+import io.maestro.common.saga.instance.SagaInstance;
+import io.maestro.common.saga.instance.SagaState;
 import io.maestro.core.saga.definition.step.LocalStep;
 import io.maestro.core.saga.definition.step.SagaStep;
-import io.maestro.core.instance.SagaInstance;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

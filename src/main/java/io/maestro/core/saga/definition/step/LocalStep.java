@@ -1,7 +1,7 @@
 package io.maestro.core.saga.definition.step;
 
-import io.maestro.core.instance.SagaState;
-import io.maestro.core.instance.SagaInstance;
+import io.maestro.common.saga.instance.SagaInstance;
+import io.maestro.common.saga.instance.SagaState;
 
 import java.util.Map;
 import java.util.Optional;

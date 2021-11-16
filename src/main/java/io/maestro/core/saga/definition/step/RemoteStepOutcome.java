@@ -1,6 +1,6 @@
 package io.maestro.core.saga.definition.step;
 
-import io.maestro.core.command.CommandWithDestination;
+import io.maestro.common.command.CommandWithDestination;
 
 public class RemoteStepOutcome<Data> implements StepOutcome<Data> {
     private boolean isSuccessful;

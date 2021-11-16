@@ -1,7 +1,6 @@
-package io.maestro.core.instance;
+package io.maestro.core;
 
-import io.maestro.core.SagaManager;
-import io.maestro.core.SagaManagerFactory;
+import io.maestro.common.saga.instance.SagaInstance;
 import io.maestro.core.saga.Saga;
 
 import java.util.concurrent.ConcurrentHashMap;

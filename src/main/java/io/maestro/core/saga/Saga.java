@@ -1,9 +1,9 @@
 package io.maestro.core.saga;
 
+import io.maestro.common.exception.InconsistentSagaStateException;
+import io.maestro.common.reply.Message;
+import io.maestro.common.saga.instance.SagaInstance;
 import io.maestro.core.dsl.SagaDefinitionDsl;
-import io.maestro.core.exception.InconsistentSagaStateException;
-import io.maestro.core.instance.SagaInstance;
-import io.maestro.core.reply.Message;
 import io.maestro.core.saga.definition.SagaDefinition;
 import io.maestro.core.saga.definition.step.RemoteStep;
 import io.maestro.core.saga.definition.step.SagaStep;

@@ -1,6 +1,6 @@
 package io.maestro.core.dsl;
 
-import io.maestro.core.command.CommandWithDestination;
+import io.maestro.common.command.CommandWithDestination;
 import io.maestro.core.saga.definition.SagaDefinition;
 import io.maestro.core.saga.definition.step.RemoteStepImpl;
 

@@ -1,8 +1,8 @@
 package io.maestro.core.saga.definition.step;
 
-import io.maestro.core.instance.SagaExecutionState;
-import io.maestro.core.instance.SagaInstance;
-import io.maestro.core.instance.SagaState;
+import io.maestro.common.saga.instance.SagaExecutionState;
+import io.maestro.common.saga.instance.SagaInstance;
+import io.maestro.common.saga.instance.SagaState;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;

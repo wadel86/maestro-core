@@ -1,6 +1,6 @@
 package io.maestro.core.dsl;
 
-import io.maestro.core.command.CommandWithDestination;
+import io.maestro.common.command.CommandWithDestination;
 
 import java.util.function.Consumer;
 import java.util.function.Function;

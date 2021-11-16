@@ -1,19 +1,21 @@
 package io.maestro.core;
 
+import io.maestro.common.command.CommandWithDestination;
+import io.maestro.common.exception.BadSagaTypeException;
+import io.maestro.common.exception.InconsistentSagaStateException;
+import io.maestro.common.port.CommandProducer;
+import io.maestro.common.port.ReplyConsumer;
+import io.maestro.common.port.SagaDataGateway;
+import io.maestro.common.reply.Message;
+import io.maestro.common.saga.instance.SagaExecutionState;
+import io.maestro.common.saga.instance.SagaInstance;
+import io.maestro.common.saga.instance.SagaSerializedData;
+import io.maestro.common.saga.instance.SagaState;
 import io.maestro.core.saga.Saga;
-import io.maestro.core.instance.SagaState;
+
 import io.maestro.core.saga.definition.step.RemoteStepOutcome;
 import io.maestro.core.saga.definition.step.SagaStep;
 import io.maestro.core.saga.definition.step.StepOutcome;
-import io.maestro.core.exception.BadSagaTypeException;
-import io.maestro.core.exception.InconsistentSagaStateException;
-import io.maestro.core.instance.SagaExecutionState;
-import io.maestro.core.instance.SagaInstance;
-import io.maestro.core.instance.SagaSerializedData;
-import io.maestro.core.ports.CommandProducer;
-import io.maestro.core.ports.ReplyConsumer;
-import io.maestro.core.ports.SagaDataGateway;
-import io.maestro.core.reply.Message;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
@@ -83,6 +85,7 @@ public class SagaManagerImpl<Data> implements SagaManager<Data> {
     private void processSteps
             (String sagaId, SagaInstance sagaInstance, Data data, List<SagaStep<Data>> stepsToProcess) {
         for (SagaStep<Data> sagaStep : stepsToProcess) {
+            CommandWithDestination command = null;
             StepOutcome<Data> stepOutcome = sagaStep.execute(sagaInstance, data);
             if(stepOutcome.isSuccessful()){
                 if(SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState())){
@@ -92,6 +95,7 @@ public class SagaManagerImpl<Data> implements SagaManager<Data> {
                     if(stepOutcome instanceof RemoteStepOutcome){
                         //send command.
                         RemoteStepOutcome<Data> remoteStepOutcome = (RemoteStepOutcome<Data>)stepOutcome;
+                        command = remoteStepOutcome.getCommandToSend();
                         this.commandProducer.sendCommand
                                 (this.saga.getSagaType(), sagaInstance.getId(), remoteStepOutcome.getCommandToSend());
                     }else{
@@ -114,7 +118,11 @@ public class SagaManagerImpl<Data> implements SagaManager<Data> {
                     return;
                 }
             }
-            this.sagaDataGateway.saveSaga(sagaInstance);
+            if(command != null){
+                this.sagaDataGateway.saveSagaAndSendCommand(sagaInstance, command);
+            }else{
+                this.sagaDataGateway.saveSaga(sagaInstance);
+            }
         }
         if(SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState())){
             if(sagaInstance.getSagaExecutionState().getPointer() != -1){

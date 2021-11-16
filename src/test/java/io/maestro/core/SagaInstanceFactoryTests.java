@@ -1,5 +1,10 @@
-package io.maestro.core.instance;
+package io.maestro.core;
 
+import io.maestro.common.saga.instance.SagaExecutionState;
+import io.maestro.common.saga.instance.SagaInstance;
+import io.maestro.common.saga.instance.SagaSerializedData;
+import io.maestro.common.saga.instance.SagaState;
+import io.maestro.core.SagaInstanceFactory;
 import io.maestro.core.SagaManager;
 import io.maestro.core.SagaManagerFactory;
 import io.maestro.core.SagaManagerImpl;

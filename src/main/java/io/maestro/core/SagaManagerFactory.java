@@ -1,9 +1,9 @@
 package io.maestro.core;
 
+import io.maestro.common.port.CommandProducer;
+import io.maestro.common.port.ReplyConsumer;
+import io.maestro.common.port.SagaDataGateway;
 import io.maestro.core.saga.Saga;
-import io.maestro.core.ports.CommandProducer;
-import io.maestro.core.ports.ReplyConsumer;
-import io.maestro.core.ports.SagaDataGateway;
 
 public class SagaManagerFactory {
     private final SagaDataGateway sagaDataGateway;

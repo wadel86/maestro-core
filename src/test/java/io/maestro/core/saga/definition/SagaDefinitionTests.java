@@ -1,12 +1,13 @@
 package io.maestro.core.saga.definition;
 
-import io.maestro.core.command.CommandWithDestination;
+import io.maestro.common.command.CommandWithDestination;
+import io.maestro.common.exception.InconsistentSagaStateException;
+import io.maestro.common.saga.instance.SagaExecutionState;
+import io.maestro.common.saga.instance.SagaInstance;
+import io.maestro.common.saga.instance.SagaSerializedData;
+import io.maestro.common.saga.instance.SagaState;
 import io.maestro.core.dsl.SagaDefinitionDsl;
-import io.maestro.core.exception.InconsistentSagaStateException;
-import io.maestro.core.instance.SagaExecutionState;
-import io.maestro.core.instance.SagaInstance;
-import io.maestro.core.instance.SagaSerializedData;
-import io.maestro.core.instance.SagaState;
+
 import io.maestro.core.saga.definition.step.LocalStep;
 import io.maestro.core.saga.definition.step.RemoteStep;
 import io.maestro.core.saga.definition.step.SagaStep;
