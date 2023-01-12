@@ -31,8 +31,9 @@ public class SagaTests implements SagaDefinitionDsl<SagaTests.TestSagaData> {
              sagaSerializedData);
 
     @Mock
-    private final SagaDefinition<TestSagaData> definition = step().invokeLocalParticipant(this::localParticipantAction)
-                                                                  .build();
+    private final SagaDefinition<TestSagaData> definition
+            = step().invokeLocalParticipant(this::localParticipantAction)
+                    .build();
 
     @Mock
     private final RemoteStep<TestSagaData> remoteStep = new RemoteStepImpl<>();
