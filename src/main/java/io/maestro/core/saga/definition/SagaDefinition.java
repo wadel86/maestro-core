@@ -7,23 +7,22 @@ import io.maestro.core.saga.definition.step.LocalStep;
 import io.maestro.core.saga.definition.step.SagaStep;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
-public class SagaDefinition<Data> {
+public class SagaDefinition<D> {
 
-    private final LinkedList<SagaStep<Data>> steps;
+    private final List<SagaStep<D>> steps;
 
-    public SagaDefinition(LinkedList<SagaStep<Data>> steps) {
+    public SagaDefinition(List<SagaStep<D>> steps) {
         this.steps = steps;
     }
 
-    public List<SagaStep<Data>> getNextSteps(SagaInstance sagaInstance){
+    public List<SagaStep<D>> getNextSteps(SagaInstance sagaInstance){
         if(!SagaState.EXECUTING.equals(sagaInstance.getSagaExecutionState().getState())){
             throw new InconsistentSagaStateException
                     ("Can't get next steps of none executing saga!");
         }
-        List<SagaStep<Data>> nextSteps = new ArrayList<>();
+        List<SagaStep<D>> nextSteps = new ArrayList<>();
         int nextStepIndex = sagaInstance.getSagaExecutionState().getPointer();
         while (nextStepIndex < steps.size()){
             nextSteps.add(steps.get(nextStepIndex));
@@ -35,12 +34,12 @@ public class SagaDefinition<Data> {
         return nextSteps;
     }
 
-    public List<SagaStep<Data>> getStepsToCompensate(SagaInstance sagaInstance){
+    public List<SagaStep<D>> getStepsToCompensate(SagaInstance sagaInstance){
         if(!SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState())){
             throw new InconsistentSagaStateException
                     ("Can't get steps to compensate of a non compensating saga!");
         }
-        List<SagaStep<Data>> startingSteps = new ArrayList<>();
+        List<SagaStep<D>> startingSteps = new ArrayList<>();
         int previousStepIndex = sagaInstance.getSagaExecutionState().getPointer() - 1;
         while (previousStepIndex > -1){
             startingSteps.add(steps.get(previousStepIndex));
@@ -49,7 +48,7 @@ public class SagaDefinition<Data> {
         return startingSteps;
     }
 
-    public SagaStep<Data> getStepInExecution(SagaInstance sagaInstance){
+    public SagaStep<D> getStepInExecution(SagaInstance sagaInstance){
         if(!SagaState.EXECUTING.equals(sagaInstance.getSagaExecutionState().getState())){
             if(SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState()))
             {

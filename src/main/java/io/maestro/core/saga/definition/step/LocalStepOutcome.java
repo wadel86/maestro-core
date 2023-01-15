@@ -2,7 +2,7 @@ package io.maestro.core.saga.definition.step;
 
 import java.util.Optional;
 
-public class LocalStepOutcome<Data> implements StepOutcome<Data> {
+public class LocalStepOutcome<D> implements StepOutcome<D> {
     private final boolean isSuccessful;
     private Optional<RuntimeException> localOutcome;
 

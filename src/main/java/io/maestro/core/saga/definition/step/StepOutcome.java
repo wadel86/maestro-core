@@ -1,5 +1,5 @@
 package io.maestro.core.saga.definition.step;
 
-public interface StepOutcome<Data> {
+public interface StepOutcome<D> {
     boolean isSuccessful();
 }

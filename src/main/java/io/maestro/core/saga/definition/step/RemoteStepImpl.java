@@ -12,26 +12,26 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class RemoteStepImpl<Data> implements RemoteStep<Data> {
+public class RemoteStepImpl<D> implements RemoteStep<D> {
 
-    private Function<Data, CommandWithDestination> remoteInvocation = null;
-    private Map<String, BiConsumer<Data, Object>> replyHandlers;
-    private Optional<Consumer<Data>> compensation;
+    private Function<D, CommandWithDestination> remoteInvocation = null;
+    private Map<String, BiConsumer<D, Object>> replyHandlers;
+    private Optional<Consumer<D>> compensation;
 
     public RemoteStepImpl() {
     }
 
     public RemoteStepImpl
-            (Function<Data, CommandWithDestination> remoteInvocation,
-             Optional<Consumer<Data>> compensation,
-             Map<String, BiConsumer<Data, Object>> replyHandlers) {
+            (Function<D, CommandWithDestination> remoteInvocation,
+             Optional<Consumer<D>> compensation,
+             Map<String, BiConsumer<D, Object>> replyHandlers) {
         this.remoteInvocation = remoteInvocation;
         this.replyHandlers = replyHandlers;
         this.compensation = compensation;
     }
 
     @Override
-    public StepOutcome<Data> execute(SagaInstance sagaInstance, Data data) {
+    public StepOutcome<D> execute(SagaInstance sagaInstance, D data) {
         if(SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState())){
             //execute compensation if exists
             compensation.ifPresent(dataConsumer -> dataConsumer.accept(data));
@@ -43,8 +43,8 @@ public class RemoteStepImpl<Data> implements RemoteStep<Data> {
     }
 
     @Override
-    public StepOutcome<Data> handleReply(
-            SagaInstance sagaInstance, Data data, Message message) {
+    public StepOutcome<D> handleReply(
+            SagaInstance sagaInstance, D data, Message message) {
         String replyType = message.getHeader("reply-type");
         String replyOutcome = message.getHeader("reply-outcome");
         this.getReplyHandler(replyType).ifPresent(handler -> {
@@ -57,15 +57,15 @@ public class RemoteStepImpl<Data> implements RemoteStep<Data> {
         }
     }
 
-    private Optional<BiConsumer<Data, Object>> getReplyHandler(String replyType) {
-        BiConsumer<Data, Object> replyHandler = replyHandlers.get(replyType);
+    private Optional<BiConsumer<D, Object>> getReplyHandler(String replyType) {
+        BiConsumer<D, Object> replyHandler = replyHandlers.get(replyType);
         if(replyHandler == null){
             return Optional.empty();
         }
         return Optional.of(replyHandler);
     }
 
-    private void invokeReplyHandler(BiConsumer<Data, Object> handler, Data data, String replyType, Message message){
+    private void invokeReplyHandler(BiConsumer<D, Object> handler, D data, String replyType, Message message){
         Class m;
         try{
             m = Class.forName(replyType);

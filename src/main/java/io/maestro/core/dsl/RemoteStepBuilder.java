@@ -11,35 +11,35 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class RemoteStepBuilder<Data> {
+public class RemoteStepBuilder<D> {
 
-    private final SagaDefinitionBuilder<Data> parent;
-    private final Function<Data, CommandWithDestination> remoteInvocation;
-    private final Map<String, BiConsumer<Data, Object>> replyHandlers = new HashMap<>();
-    private Optional<Consumer<Data>> compensation;
+    private final SagaDefinitionBuilder<D> parent;
+    private final Function<D, CommandWithDestination> remoteInvocation;
+    private final Map<String, BiConsumer<D, Object>> replyHandlers = new HashMap<>();
+    private Optional<Consumer<D>> compensation;
 
     public RemoteStepBuilder
-            (SagaDefinitionBuilder<Data> parent, Function<Data, CommandWithDestination> remoteInvocation) {
+            (SagaDefinitionBuilder<D> parent, Function<D, CommandWithDestination> remoteInvocation) {
         this.parent = parent;
         this.remoteInvocation = remoteInvocation;
     }
 
-    public <T> RemoteStepBuilder<Data> onReply(Class<T> replyClass, BiConsumer<Data, T> replyHandler) {
+    public <T> RemoteStepBuilder<D> onReply(Class<T> replyClass, BiConsumer<D, T> replyHandler) {
         this.replyHandlers.put(replyClass.getName(), (data, rawReply) -> replyHandler.accept(data, (T)rawReply));
         return this;
     }
 
-    public RemoteStepBuilder<Data> withCompensation(Consumer<Data> compensation){
+    public RemoteStepBuilder<D> withCompensation(Consumer<D> compensation){
         this.compensation = Optional.of(compensation);
         return this;
     }
 
-    public StepBuilder<Data> step() {
+    public StepBuilder<D> step() {
         this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, Optional.empty(), replyHandlers));
         return new StepBuilder<>(this.parent);
     }
 
-    public SagaDefinition<Data> build() {
+    public SagaDefinition<D> build() {
         this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, Optional.empty(), replyHandlers));
         return this.parent.build();
     }

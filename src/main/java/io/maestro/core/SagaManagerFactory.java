@@ -17,7 +17,7 @@ public class SagaManagerFactory {
         this.replyConsumer = replyConsumer;
     }
 
-    public <Data> SagaManager<Data> createSagaManager(Saga<Data> saga) {
+    public <D> SagaManager<D> createSagaManager(Saga<D> saga) {
         return new SagaManagerImpl<>(sagaDataGateway, commandProducer, replyConsumer, saga);
     }
 }

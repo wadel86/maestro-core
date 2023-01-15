@@ -15,18 +15,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class SagaInstanceFactoryTests {
+class SagaInstanceFactoryTests {
 
     @Mock
-    private final SagaManagerFactory sagaManagerFactory
-            = new SagaManagerFactory(null, null, null);
+    private SagaManagerFactory sagaManagerFactory;
 
     @Mock
-    private final SagaManager<TestSagaData> sagaManager
-            = new SagaManagerImpl<>(null, null, null, null);
+    private SagaManager<TestSagaData> sagaManager;
 
     @Test
-    public void createSagaInstance_shouldCreateSagaInstance(){
+    void createSagaInstance_shouldCreateSagaInstance(){
         //given
         SagaInstanceFactory sagaInstanceFactory = new SagaInstanceFactory(sagaManagerFactory);
         Saga<TestSagaData> saga = new TestSaga();
@@ -46,7 +44,7 @@ public class SagaInstanceFactoryTests {
     }
 
     @Test
-    public void createSagaInstance_shouldNotCreateSagaManagerEverytimeASagaInstanceIsCreated(){
+    void createSagaInstance_shouldNotCreateSagaManagerEverytimeASagaInstanceIsCreated(){
         //given
         SagaInstanceFactory sagaInstanceFactory = new SagaInstanceFactory(sagaManagerFactory);
         Saga<TestSagaData> saga = new TestSaga();

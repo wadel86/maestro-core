@@ -16,20 +16,19 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
-public class LocalStepTests {
+class LocalStepTests {
 
     private boolean actionExecuted = false;
     private boolean compensationExecuted = false;
     private boolean exceptionHandlerExecuted = false;
 
     @Test
-    public void executeStep_whenSagaIsExecuting_ShouldExecuteAction(){
+    void executeStep_whenSagaIsExecuting_ShouldExecuteAction() {
         //given
-        LocalStep<TestSagaData> localStep
-                = new LocalStep<>(this::localActionToExecute, Optional.empty(), new HashMap<>());
+        LocalStep<TestSagaData> localStep = new LocalStep<>(this::localActionToExecute, Optional.empty(),
+                                                            new HashMap<>());
         SagaExecutionState sagaExecutionState = new SagaExecutionState(1, SagaState.EXECUTING);
-        SagaInstance sagaInstance
-                = new SagaInstance("saga-id", "saga-type", sagaExecutionState, null);
+        SagaInstance sagaInstance = new SagaInstance("saga-id", "saga-type", sagaExecutionState, null);
         //when
         StepOutcome<TestSagaData> stepOutcome = localStep.execute(sagaInstance, new TestSagaData());
         //then
@@ -38,14 +37,13 @@ public class LocalStepTests {
     }
 
     @Test
-    public void executeStep_whenSagaIsCompensating_ShouldExecuteCompensation(){
+    void executeStep_whenSagaIsCompensating_ShouldExecuteCompensation() {
         //given
-        LocalStep<TestSagaData> localStep
-                = new LocalStep<>(this::localActionToExecute, Optional.of(this::localCompensationToExecute),
-                                  new HashMap<>());
+        LocalStep<TestSagaData> localStep = new LocalStep<>(this::localActionToExecute,
+                                                            Optional.of(this::localCompensationToExecute),
+                                                            new HashMap<>());
         SagaExecutionState sagaExecutionState = new SagaExecutionState(1, SagaState.COMPENSATING);
-        SagaInstance sagaInstance
-                = new SagaInstance("saga-id", "saga-type", sagaExecutionState, null);
+        SagaInstance sagaInstance = new SagaInstance("saga-id", "saga-type", sagaExecutionState, null);
         //when
         StepOutcome<TestSagaData> stepOutcome = localStep.execute(sagaInstance, new TestSagaData());
         //then
@@ -54,17 +52,16 @@ public class LocalStepTests {
     }
 
     @Test
-    public void executeStep_whenActionThrowsAnException_ShouldExecuteExceptionHandler(){
+    void executeStep_whenActionThrowsAnException_ShouldExecuteExceptionHandler() {
         //given
         Map<String, Consumer<TestSagaData>> exceptionHandlers = new HashMap<>();
         exceptionHandlers.put(FirstException.class.getName(), this::firstExceptionHandler);
         exceptionHandlers.put(SecondException.class.getName(), this::secondExceptionHandler);
-        LocalStep<TestSagaData> localStep
-                = new LocalStep<>(this::localActionThrowsException, Optional.of(this::localCompensationToExecute),
-                                  exceptionHandlers);
+        LocalStep<TestSagaData> localStep = new LocalStep<>(this::localActionThrowsException,
+                                                            Optional.of(this::localCompensationToExecute),
+                                                            exceptionHandlers);
         SagaExecutionState sagaExecutionState = new SagaExecutionState(1, SagaState.EXECUTING);
-        SagaInstance sagaInstance
-                = new SagaInstance("saga-id", "saga-type", sagaExecutionState, null);
+        SagaInstance sagaInstance = new SagaInstance("saga-id", "saga-type", sagaExecutionState, null);
         //when
         StepOutcome<TestSagaData> stepOutcome = localStep.execute(sagaInstance, new TestSagaData());
         //then

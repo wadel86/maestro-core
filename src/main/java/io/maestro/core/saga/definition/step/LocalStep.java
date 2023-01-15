@@ -7,44 +7,44 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class LocalStep<Data> implements SagaStep<Data> {
+public class LocalStep<D> implements SagaStep<D> {
 
-    private Consumer<Data> localFunction;
-    private Optional<Consumer<Data>> compensation;
-    private Map<String, Consumer<Data>> exceptionHandlers;
+    private Consumer<D> localFunction;
+    private Optional<Consumer<D>> compensation;
+    private Map<String, Consumer<D>> exceptionHandlers;
 
     public LocalStep() {
     }
 
     public LocalStep
-            (Consumer<Data> localFunction,
-             Optional<Consumer<Data>> compensation,
-             Map<String, Consumer<Data>> exceptionHandlers) {
+            (Consumer<D> localFunction,
+             Optional<Consumer<D>> compensation,
+             Map<String, Consumer<D>> exceptionHandlers) {
         this.localFunction = localFunction;
         this.compensation = compensation;
         this.exceptionHandlers = exceptionHandlers;
     }
 
     @Override
-    public StepOutcome<Data> execute(SagaInstance sagaInstance, Data data) {
+    public StepOutcome<D> execute(SagaInstance sagaInstance, D d) {
         if(SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState())){
             //execute compensation if exists
-            compensation.ifPresent(dataConsumer -> dataConsumer.accept(data));
-            return new LocalStepOutcome<Data>(true, Optional.empty());
+            compensation.ifPresent(dataConsumer -> dataConsumer.accept(d));
+            return new LocalStepOutcome<>(true, Optional.empty());
         }else{
             //execute action
             try{
-                localFunction.accept(data);
-                return new LocalStepOutcome<Data>(true, Optional.empty());
+                localFunction.accept(d);
+                return new LocalStepOutcome<>(true, Optional.empty());
             }catch (RuntimeException exception){
-                this.getExceptionHandler(exception.getClass().getName()).ifPresent((handler) -> handler.accept(data));
-                return new LocalStepOutcome<Data>(false, Optional.of(exception));
+                this.getExceptionHandler(exception.getClass().getName()).ifPresent(handler -> handler.accept(d));
+                return new LocalStepOutcome<>(false, Optional.of(exception));
             }
         }
     }
 
-    private Optional<Consumer<Data>> getExceptionHandler(String exceptionType) {
-        Consumer<Data> exceptionHandler = exceptionHandlers.get(exceptionType);
+    private Optional<Consumer<D>> getExceptionHandler(String exceptionType) {
+        Consumer<D> exceptionHandler = exceptionHandlers.get(exceptionType);
         if(exceptionHandler == null){
             return Optional.empty();
         }

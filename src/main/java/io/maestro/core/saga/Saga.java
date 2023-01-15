@@ -11,9 +11,9 @@ import io.maestro.core.saga.definition.step.StepOutcome;
 
 import java.util.List;
 
-public abstract class Saga <Data> implements SagaDefinitionDsl<Data> {
+public abstract class Saga <D> implements SagaDefinitionDsl<D> {
     private String sagaType;
-    private SagaDefinition<Data> definition;
+    private SagaDefinition<D> definition;
 
     public String getSagaType
             (){
@@ -25,34 +25,34 @@ public abstract class Saga <Data> implements SagaDefinitionDsl<Data> {
         this.sagaType = sagaType;
     }
 
-    public SagaDefinition<Data> getDefinition
+    public SagaDefinition<D> getDefinition
             (){
         return definition;
     }
 
     public void setDefinition
-            (SagaDefinition<Data> definition){
+            (SagaDefinition<D> definition){
         this.definition = definition;
     }
 
-    public List<SagaStep<Data>> getNextSteps
+    public List<SagaStep<D>> getNextSteps
             (SagaInstance sagaInstance) {
         return definition.getNextSteps(sagaInstance);
     }
 
-    public List<SagaStep<Data>> getStepsToCompensate
+    public List<SagaStep<D>> getStepsToCompensate
             (SagaInstance sagaInstance) {
         return definition.getStepsToCompensate(sagaInstance);
     }
 
-    public StepOutcome<Data> handleReply
-            (SagaInstance sagaInstance, Data sagaData, Message message){
-        SagaStep<Data> stepInExecution = definition.getStepInExecution(sagaInstance);
+    public StepOutcome<D> handleReply
+            (SagaInstance sagaInstance, D sagaData, Message message){
+        SagaStep<D> stepInExecution = definition.getStepInExecution(sagaInstance);
         if(!(stepInExecution instanceof RemoteStep)){
             throw new InconsistentSagaStateException
                     ("Can't handle reply for local step");
         }
-        RemoteStep<Data> remoteStep = (RemoteStep<Data>)stepInExecution;
+        RemoteStep<D> remoteStep = (RemoteStep<D>)stepInExecution;
         return remoteStep.handleReply(sagaInstance, sagaData, message);
     }
 

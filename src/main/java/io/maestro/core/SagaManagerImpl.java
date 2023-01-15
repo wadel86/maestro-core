@@ -20,15 +20,15 @@ import io.maestro.core.saga.definition.step.StepOutcome;
 import javax.annotation.PostConstruct;
 import java.util.List;
 
-public class SagaManagerImpl<Data> implements SagaManager<Data> {
+public class SagaManagerImpl<D> implements SagaManager<D> {
     private final SagaDataGateway sagaDataGateway;
     private final CommandProducer commandProducer;
     private final ReplyConsumer replyConsumer;
-    private final Saga<Data> saga;
+    private final Saga<D> saga;
 
     public SagaManagerImpl
             (SagaDataGateway sagaDataGateway, CommandProducer commandProducer,
-             ReplyConsumer replyConsumer, Saga<Data> saga) {
+             ReplyConsumer replyConsumer, Saga<D> saga) {
         this.sagaDataGateway = sagaDataGateway;
         this.commandProducer = commandProducer;
         this.replyConsumer = replyConsumer;
@@ -37,7 +37,7 @@ public class SagaManagerImpl<Data> implements SagaManager<Data> {
 
     @Override
     public SagaInstance create
-            (Data sagaData) throws BadSagaTypeException {
+            (D sagaData) throws BadSagaTypeException {
         SagaInstance sagaInstance
                 = new SagaInstance
                 ((String)null,
@@ -46,7 +46,7 @@ public class SagaManagerImpl<Data> implements SagaManager<Data> {
                  SagaSerializedData.serializeSagaData(sagaData));
         sagaInstance = sagaDataGateway.saveSaga(sagaInstance);
         sagaInstance.start();
-        List<SagaStep<Data>> startingSteps = saga.getNextSteps(sagaInstance);
+        List<SagaStep<D>> startingSteps = saga.getNextSteps(sagaInstance);
         processSteps(sagaInstance.getId(), sagaInstance, sagaData, startingSteps);
         return sagaInstance;
     }
@@ -68,9 +68,9 @@ public class SagaManagerImpl<Data> implements SagaManager<Data> {
             String sagaId = message.getHeader("Saga-ID");
             String sagaType = message.getHeader("Saga-Type");
             SagaInstance sagaInstance = sagaDataGateway.findSaga(sagaId, sagaType);
-            Data sagaData = sagaInstance.getSerializedData().deserializeSagaData();
-            StepOutcome<Data> stepOutcome = saga.handleReply(sagaInstance, sagaData, message);
-            List<SagaStep<Data>> stepsToExecute;
+            D sagaData = sagaInstance.getSerializedData().deserializeSagaData();
+            StepOutcome<D> stepOutcome = saga.handleReply(sagaInstance, sagaData, message);
+            List<SagaStep<D>> stepsToExecute;
             if(stepOutcome.isSuccessful()){
                 sagaInstance.getSagaExecutionState().stepUp();
                 stepsToExecute = this.saga.getNextSteps(sagaInstance);
@@ -83,10 +83,10 @@ public class SagaManagerImpl<Data> implements SagaManager<Data> {
     }
 
     private void processSteps
-            (String sagaId, SagaInstance sagaInstance, Data data, List<SagaStep<Data>> stepsToProcess) {
-        for (SagaStep<Data> sagaStep : stepsToProcess) {
+            (String sagaId, SagaInstance sagaInstance, D data, List<SagaStep<D>> stepsToProcess) {
+        for (SagaStep<D> sagaStep : stepsToProcess) {
             CommandWithDestination command = null;
-            StepOutcome<Data> stepOutcome = sagaStep.execute(sagaInstance, data);
+            StepOutcome<D> stepOutcome = sagaStep.execute(sagaInstance, data);
             if(stepOutcome.isSuccessful()){
                 if(SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState())){
                     //if compensating, update saga instance state
@@ -94,7 +94,7 @@ public class SagaManagerImpl<Data> implements SagaManager<Data> {
                 }else{
                     if(stepOutcome instanceof RemoteStepOutcome){
                         //send command.
-                        RemoteStepOutcome<Data> remoteStepOutcome = (RemoteStepOutcome<Data>)stepOutcome;
+                        RemoteStepOutcome<D> remoteStepOutcome = (RemoteStepOutcome<D>)stepOutcome;
                         command = remoteStepOutcome.getCommandToSend();
                         this.commandProducer.sendCommand
                                 (this.saga.getSagaType(), sagaInstance.getId(), remoteStepOutcome.getCommandToSend());

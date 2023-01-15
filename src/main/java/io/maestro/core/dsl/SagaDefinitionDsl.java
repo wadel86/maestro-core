@@ -1,8 +1,8 @@
 package io.maestro.core.dsl;
 
-public interface SagaDefinitionDsl<Data> {
-    default StepBuilder<Data> step() {
-        SagaDefinitionBuilder<Data> sagaDefinitionBuilder = new SagaDefinitionBuilder<Data>();
+public interface SagaDefinitionDsl<D> {
+    default StepBuilder<D> step() {
+        SagaDefinitionBuilder<D> sagaDefinitionBuilder = new SagaDefinitionBuilder<>();
         return new StepBuilder<>(sagaDefinitionBuilder);
     }
 }

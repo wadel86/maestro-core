@@ -9,45 +9,45 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class LocalStepBuilder<Data> {
+public class LocalStepBuilder<D> {
 
-    private SagaDefinitionBuilder<Data> parent;
-    private Consumer<Data> localFunction;
-    private Optional<Consumer<Data>> compensation = Optional.empty();
-    private Map<String, Consumer<Data>> exceptionHandlers = new HashMap<>();
+    private SagaDefinitionBuilder<D> parent;
+    private Consumer<D> localFunction;
+    private Optional<Consumer<D>> compensation = Optional.empty();
+    private Map<String, Consumer<D>> exceptionHandlers = new HashMap<>();
 
-    public LocalStepBuilder(SagaDefinitionBuilder<Data> parent, Consumer<Data> localFunction){
+    public LocalStepBuilder(SagaDefinitionBuilder<D> parent, Consumer<D> localFunction){
         this.parent = parent;
         this.localFunction = localFunction;
     }
 
-    public LocalStepBuilder<Data> withCompensation(Consumer<Data> localFunction){
+    public LocalStepBuilder<D> withCompensation(Consumer<D> localFunction){
         this.compensation = Optional.of(localFunction);
         return this;
     }
 
-    public LocalStepBuilder<Data> onExceptions(List<Class<?>> exceptionTypes, Consumer<Data> exceptionHandler) {
+    public LocalStepBuilder<D> onExceptions(List<Class<?>> exceptionTypes, Consumer<D> exceptionHandler) {
         for(Class<?> exceptionType : exceptionTypes){
             addExceptionHandler(exceptionType, exceptionHandler);
         }
         return this;
     }
 
-    public <T> LocalStepBuilder<Data> onException(Class<T> exceptionType, Consumer<Data> exceptionHandler) {
+    public <T> LocalStepBuilder<D> onException(Class<T> exceptionType, Consumer<D> exceptionHandler) {
         addExceptionHandler(exceptionType, exceptionHandler);
         return this;
     }
 
-    private <T> void addExceptionHandler(Class<T> exceptionType, Consumer<Data> exceptionHandler) {
+    private <T> void addExceptionHandler(Class<T> exceptionType, Consumer<D> exceptionHandler) {
         this.exceptionHandlers.put(exceptionType.getName(), exceptionHandler);
     }
 
-    public StepBuilder<Data> step() {
+    public StepBuilder<D> step() {
         this.parent.addStep(new LocalStep<>(localFunction, compensation, exceptionHandlers));
         return new StepBuilder<>(this.parent);
     }
 
-    public SagaDefinition<Data> build() {
+    public SagaDefinition<D> build() {
         this.parent.addStep(new LocalStep<>(localFunction, compensation, exceptionHandlers));
         return this.parent.build();
     }

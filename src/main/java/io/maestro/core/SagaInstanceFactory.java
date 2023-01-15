@@ -14,12 +14,12 @@ public class SagaInstanceFactory {
         this.sagaManagerFactory = sagaManagerFactory;
     }
 
-    public <Data> SagaInstance createSagaInstance(Saga<Data> saga, Data sagaData) {
+    public <D> SagaInstance createSagaInstance(Saga<D> saga, D sagaData) {
         SagaManager sagaManager =  sagaManagers.computeIfAbsent(saga, this::createSagaManager);
         return sagaManager.create(sagaData);
     }
 
-    private <Data> SagaManager<Data> createSagaManager(Saga<Data> saga) {
+    private <D> SagaManager<D> createSagaManager(Saga<D> saga) {
         return sagaManagerFactory.createSagaManager(saga);
     }
  }

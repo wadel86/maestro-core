@@ -5,19 +5,19 @@ import io.maestro.common.command.CommandWithDestination;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class StepBuilder<Data> {
+public class StepBuilder<D> {
 
-    private SagaDefinitionBuilder<Data> parent;
+    private SagaDefinitionBuilder<D> parent;
 
-    public StepBuilder(SagaDefinitionBuilder<Data> parentBuilder) {
+    public StepBuilder(SagaDefinitionBuilder<D> parentBuilder) {
         this.parent = parentBuilder;
     }
 
-    public LocalStepBuilder<Data> invokeLocalParticipant(Consumer<Data> localFunction) {
+    public LocalStepBuilder<D> invokeLocalParticipant(Consumer<D> localFunction) {
         return new LocalStepBuilder<>(parent, localFunction);
     }
 
-    public RemoteStepBuilder<Data> invokeRemoteParticipant(Function<Data, CommandWithDestination> remoteInvocation) {
+    public RemoteStepBuilder<D> invokeRemoteParticipant(Function<D, CommandWithDestination> remoteInvocation) {
         return new RemoteStepBuilder<>(parent, remoteInvocation);
     }
 }

@@ -20,14 +20,14 @@ import java.util.function.BiConsumer;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-public class RemoteStepImplTests {
+class RemoteStepImplTests {
 
     private boolean compensationExecuted = false;
     private boolean replyHandlerExecuted = false;
     private final CommandWithDestination commandWithDestination = new CommandWithDestination();
 
     @Test
-    public void executeStep_whenSagaIsExecuting_ShouldExecuteAction(){
+    void executeStep_whenSagaIsExecuting_ShouldExecuteAction(){
         //given
         RemoteStepImpl<TestSagaData> remoteStep
                 = new RemoteStepImpl<>(this::remoteActionToExecute,
@@ -44,7 +44,7 @@ public class RemoteStepImplTests {
     }
 
     @Test
-    public void executeStep_whenSagaIsCompensating_ShouldExecuteCompensation(){
+    void executeStep_whenSagaIsCompensating_ShouldExecuteCompensation(){
         //given
         RemoteStepImpl<TestSagaData> remoteStep
                 = new RemoteStepImpl<>(this::remoteActionToExecute,

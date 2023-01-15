@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class SagaTests implements SagaDefinitionDsl<SagaTests.TestSagaData> {
+class SagaTests implements SagaDefinitionDsl<SagaTests.TestSagaData> {
 
     private final SagaSerializedData sagaSerializedData
             = new SagaSerializedData(TestSagaData.class.getName(), "test");
@@ -31,15 +31,13 @@ public class SagaTests implements SagaDefinitionDsl<SagaTests.TestSagaData> {
              sagaSerializedData);
 
     @Mock
-    private final SagaDefinition<TestSagaData> definition
-            = step().invokeLocalParticipant(this::localParticipantAction)
-                    .build();
+    private SagaDefinition<TestSagaData> definition;
 
     @Mock
-    private final RemoteStep<TestSagaData> remoteStep = new RemoteStepImpl<>();
+    private RemoteStep<TestSagaData> remoteStep;
 
     @Test
-    public void getNextSteps_ShouldCallRightMethods() {
+    void getNextSteps_ShouldCallRightMethods() {
         //given
         Saga<TestSagaData> testSaga = new TestSaga(definition);
         //when
@@ -51,7 +49,7 @@ public class SagaTests implements SagaDefinitionDsl<SagaTests.TestSagaData> {
     }
 
     @Test
-    public void getStepToCompensate_ShouldCallRightMethods() {
+    void getStepToCompensate_ShouldCallRightMethods() {
         //given
         Saga<TestSagaData> testSaga = new TestSaga(definition);
         //when
@@ -63,7 +61,7 @@ public class SagaTests implements SagaDefinitionDsl<SagaTests.TestSagaData> {
     }
 
     @Test
-    public void handleReply_ShouldHandleReplyCorrectly() {
+    void handleReply_ShouldHandleReplyCorrectly() {
         //given
         TestSagaData sagaData = new TestSagaData();
         Saga<TestSagaData> testSaga = new TestSaga(definition);
@@ -80,7 +78,7 @@ public class SagaTests implements SagaDefinitionDsl<SagaTests.TestSagaData> {
     }
 
     @Test
-    public void handleReply_whenALocalStepIsTheCurrentStep_ShouldThrowsInconsistentSagaStateException() {
+    void handleReply_whenALocalStepIsTheCurrentStep_ShouldThrowsInconsistentSagaStateException() {
         //given
         TestSagaData sagaData = new TestSagaData();
         Saga<TestSagaData> testSaga = new TestSaga(definition);

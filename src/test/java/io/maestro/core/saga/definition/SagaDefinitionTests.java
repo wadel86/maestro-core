@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTests.SagaData> {
+class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTests.SagaData> {
 
     private final SagaDefinition<SagaData> sagaDefinition
             = step().invokeLocalParticipant(this::localParticipantAction)
@@ -30,7 +30,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
                     .build();
 
     @Test
-    public void getNextSteps_WhenSagaStateIsExecuting_thenShouldReturnsAllLocalStepsAndTheFirstRemoteStep(){
+    void getNextSteps_WhenSagaStateIsExecuting_thenShouldReturnsAllLocalStepsAndTheFirstRemoteStep(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -47,7 +47,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getNextSteps_whenAllStepsAreExecuted_thenShouldReturnsEmptyStepList(){
+    void getNextSteps_whenAllStepsAreExecuted_thenShouldReturnsEmptyStepList(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -62,7 +62,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getNextSteps_whenSagaStateIsCreated_thenExpectInconsistentSagaStateException(){
+    void getNextSteps_whenSagaStateIsCreated_thenExpectInconsistentSagaStateException(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -77,7 +77,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getNextSteps_whenSagaStateIsCompensating_thenExpectInconsistentSagaStateException(){
+    void getNextSteps_whenSagaStateIsCompensating_thenExpectInconsistentSagaStateException(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -92,7 +92,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getNextSteps_whenSagaStateIsTerminated_thenExpectInconsistentSagaStateException(){
+    void getNextSteps_whenSagaStateIsTerminated_thenExpectInconsistentSagaStateException(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -107,7 +107,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getNextSteps_whenRemainingStepsAreOnlyRemote_thenShouldReturnsOnlyOneRemoteStep(){
+    void getNextSteps_whenRemainingStepsAreOnlyRemote_thenShouldReturnsOnlyOneRemoteStep(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -123,7 +123,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getStepsToCompensate_shouldReturnsAllExecutedSteps(){
+    void getStepsToCompensate_shouldReturnsAllExecutedSteps(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -141,7 +141,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getStepsToCompensate_whenSagaIsExecuting_thenExpectInconsistentSagaStateException(){
+    void getStepsToCompensate_whenSagaIsExecuting_thenExpectInconsistentSagaStateException(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -157,7 +157,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getStepsToCompensate_whenSagaIsCreated_thenExpectInconsistentSagaStateException(){
+    void getStepsToCompensate_whenSagaIsCreated_thenExpectInconsistentSagaStateException(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -173,7 +173,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getStepsToCompensate_whenSagaIsTerminated_thenExpectInconsistentSagaStateException(){
+    void getStepsToCompensate_whenSagaIsTerminated_thenExpectInconsistentSagaStateException(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -189,7 +189,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getStepInException_whenSagaIsExecuting_thenReturnsTheRightStep(){
+    void getStepInException_whenSagaIsExecuting_thenReturnsTheRightStep(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -204,7 +204,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getStepInException_whenSagaIsCreated_thenExpectInconsistentSagaStateException(){
+    void getStepInException_whenSagaIsCreated_thenExpectInconsistentSagaStateException(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -220,7 +220,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getStepInException_whenSagaIsCompensating_thenExpectInconsistentSagaStateException(){
+    void getStepInException_whenSagaIsCompensating_thenExpectInconsistentSagaStateException(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
@@ -236,7 +236,7 @@ public class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTest
     }
 
     @Test
-    public void getStepInException_whenSagaIsTerminated_thenExpectInconsistentSagaStateException(){
+    void getStepInException_whenSagaIsTerminated_thenExpectInconsistentSagaStateException(){
         //given
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
