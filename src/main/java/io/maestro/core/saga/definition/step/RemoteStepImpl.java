@@ -13,11 +13,23 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * A step carried out by a remote participant: the saga sends it a command and parks
+ * until it replies.
+ *
+ * <p>Undoing such a step usually means asking the same participant to undo its work,
+ * which is another command and another reply, so a remote step can be given a
+ * {@code remoteCompensation}. When it has one, compensation is a full round trip, exactly
+ * like the forward direction. A step whose undo is purely local business (releasing a
+ * reservation this service holds, say) can use the plain {@code compensation} instead,
+ * which runs in place and completes immediately.
+ */
 public class RemoteStepImpl<D> implements RemoteStep<D> {
 
     private Function<D, CommandWithDestination> remoteInvocation = null;
     private Map<String, BiConsumer<D, Object>> replyHandlers;
-    private Optional<Consumer<D>> compensation;
+    private Optional<Consumer<D>> compensation = Optional.empty();
+    private Optional<Function<D, CommandWithDestination>> remoteCompensation = Optional.empty();
 
     public RemoteStepImpl() {
     }
@@ -26,14 +38,28 @@ public class RemoteStepImpl<D> implements RemoteStep<D> {
             (Function<D, CommandWithDestination> remoteInvocation,
              Optional<Consumer<D>> compensation,
              Map<String, BiConsumer<D, Object>> replyHandlers) {
+        this(remoteInvocation, compensation, Optional.empty(), replyHandlers);
+    }
+
+    public RemoteStepImpl
+            (Function<D, CommandWithDestination> remoteInvocation,
+             Optional<Consumer<D>> compensation,
+             Optional<Function<D, CommandWithDestination>> remoteCompensation,
+             Map<String, BiConsumer<D, Object>> replyHandlers) {
         this.remoteInvocation = remoteInvocation;
         this.replyHandlers = replyHandlers;
         this.compensation = compensation;
+        this.remoteCompensation = remoteCompensation;
     }
 
     @Override
     public StepOutcome<D> execute(SagaInstance sagaInstance, D data) {
         if(SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState())){
+            if(remoteCompensation.isPresent()){
+                //undoing this step is the participant's job: send the compensating
+                //command and park, the same way the forward direction does.
+                return RemoteStepOutcome.dispatch(remoteCompensation.get().apply(data));
+            }
             //execute compensation if exists
             compensation.ifPresent(dataConsumer -> dataConsumer.accept(data));
             return new LocalStepOutcome<>(true, Optional.empty());

@@ -86,10 +86,24 @@ public class SagaManagerImpl<D> implements SagaManager<D> {
         String sagaId = message.getHeader(MessageHeaders.SAGA_ID);
         String sagaType = message.getHeader(MessageHeaders.SAGA_TYPE);
         SagaInstance sagaInstance = sagaDataGateway.findSaga(sagaId, sagaType);
+        if(!isAwaitingThisReply(sagaInstance, message)){
+            return;
+        }
+        boolean wasCompensating = isCompensating(sagaInstance);
         D sagaData = sagaInstance.getSerializedData().deserializeSagaData();
         StepOutcome<D> stepOutcome = saga.handleReply(sagaInstance, sagaData, message);
         List<SagaStep<D>> stepsToExecute;
-        if(stepOutcome.isSuccessful()){
+        if(wasCompensating){
+            if(!stepOutcome.isSuccessful()){
+                //the participant could not undo its work, so the saga cannot be brought
+                //back to a consistent state on its own.
+                throw new InconsistentSagaStateException
+                        ("Compensation failed, nothing to do");
+            }
+            //one more step undone; carry on unwinding.
+            sagaInstance.stepDown();
+            stepsToExecute = this.saga.getStepsToCompensate(sagaInstance);
+        }else if(stepOutcome.isSuccessful()){
             //the participant is done, so the step this saga was parked on is complete.
             sagaInstance.stepUp();
             stepsToExecute = this.saga.getNextSteps(sagaInstance);
@@ -98,6 +112,28 @@ public class SagaManagerImpl<D> implements SagaManager<D> {
             stepsToExecute = this.saga.getStepsToCompensate(sagaInstance);
         }
         processSteps(sagaInstance, sagaData, stepsToExecute);
+    }
+
+    /**
+     * Guards against replies this saga is not in fact waiting for: a redelivery of one
+     * already acted on, or one arriving after the saga finished. Without this a duplicate
+     * would step the saga a second time and quietly corrupt its position.
+     *
+     * <p>The check relies on the participant echoing {@link MessageHeaders#SAGA_STEP}. A
+     * participant that omits it is trusted, as before, so older ones keep working.
+     */
+    private boolean isAwaitingThisReply
+            (SagaInstance sagaInstance, Message message) {
+        SagaExecutionState executionState = sagaInstance.getSagaExecutionState();
+        if(SagaState.TERMINATED.equals(executionState.getState())
+                || SagaState.CREATED.equals(executionState.getState())){
+            return false;
+        }
+        String repliedStep = message.getHeader(MessageHeaders.SAGA_STEP);
+        if(repliedStep == null){
+            return true;
+        }
+        return String.valueOf(executionState.getPointer()).equals(repliedStep.trim());
     }
 
     private void processSteps
@@ -115,25 +151,27 @@ public class SagaManagerImpl<D> implements SagaManager<D> {
                 processSteps(sagaInstance, data, this.saga.getStepsToCompensate(sagaInstance));
                 return;
             }
-            CommandWithDestination command = null;
+            if(stepOutcome instanceof RemoteStepOutcome){
+                //a participant has to answer before this saga moves again, in either
+                //direction, so park on this step and stop: the pointer advances when the
+                //reply arrives, and nothing behind this step may run in the meantime.
+                CommandWithDestination command
+                        = ((RemoteStepOutcome<D>)stepOutcome).getCommandToSend();
+                sagaInstance.setSerializedData(
+                        SagaSerializedData.serializeSagaData(data));
+                this.sagaDataGateway.saveSagaAndSendCommand(sagaInstance, command);
+                return;
+            }
             if(isCompensating(sagaInstance)){
                 //one more step undone.
                 sagaInstance.stepDown();
-            }else if(stepOutcome instanceof RemoteStepOutcome){
-                //hand the command to the gateway and park the saga on this step:
-                //the pointer only advances once the participant replies.
-                command = ((RemoteStepOutcome<D>)stepOutcome).getCommandToSend();
             }else{
                 sagaInstance.stepUp();
             }
             //update saga instance data.
             sagaInstance.setSerializedData(
                     SagaSerializedData.serializeSagaData(data));
-            if(command != null){
-                this.sagaDataGateway.saveSagaAndSendCommand(sagaInstance, command);
-            }else{
-                this.sagaDataGateway.saveSaga(sagaInstance);
-            }
+            this.sagaDataGateway.saveSaga(sagaInstance);
         }
         terminateIfFinished(sagaInstance);
     }

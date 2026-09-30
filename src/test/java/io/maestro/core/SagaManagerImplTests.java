@@ -238,6 +238,95 @@ class SagaManagerImplTests {
         assertEquals("Compensation failed, nothing to do", exception.getMessage());
     }
 
+    // ------------------------------------------------- compensating a participant
+
+    /**
+     * Walks the whole round trip: a saga gets past its remote step, fails on a later
+     * local one, asks the participant to undo its work, and only finishes unwinding once
+     * the participant confirms.
+     */
+    @Test
+    void remoteCompensation_shouldAskTheParticipantToUndoAndWaitForItsReply() {
+        manage(new RemoteCompensationSaga()).create(new OrderData());
+        replyConsumer.deliver(replyForStep("remote-undo", MessageHeaders.SUCCESS, 1));
+
+        //C fails, so the participant is asked to undo step 1
+        assertEquals(List.of("A.do", "R.invoke", "C.do", "R.undo.invoke"), participantCalls());
+        assertEquals(2, gateway.sentCommands.size());
+        assertEquals(SagaState.COMPENSATING, gateway.stored.getSagaExecutionState().getState());
+        assertEquals(1, gateway.stored.getSagaExecutionState().getPointer(),
+                     "the saga must stay parked on the step it is undoing");
+
+        //the participant confirms, and only then does the rest unwind
+        replyConsumer.deliver(replyForStep("remote-undo", MessageHeaders.SUCCESS, 1));
+
+        assertEquals(List.of("A.do", "R.invoke", "C.do", "R.undo.invoke", "A.undo"),
+                     participantCalls());
+        assertEquals(SagaState.TERMINATED, gateway.stored.getSagaExecutionState().getState());
+        assertEquals(-1, gateway.stored.getSagaExecutionState().getPointer());
+    }
+
+    @Test
+    void remoteCompensation_shouldNotUnwindPastTheStepItIsWaitingOn() {
+        manage(new RemoteCompensationSaga()).create(new OrderData());
+
+        replyConsumer.deliver(replyForStep("remote-undo", MessageHeaders.SUCCESS, 1));
+
+        //A sits behind the remote step, so its undo must wait for the participant
+        assertFalse(participantCalls().contains("A.undo"));
+    }
+
+    @Test
+    void remoteCompensation_whenTheParticipantCannotUndo_shouldThrowInconsistentSagaState() {
+        manage(new RemoteCompensationSaga()).create(new OrderData());
+        replyConsumer.deliver(replyForStep("remote-undo", MessageHeaders.SUCCESS, 1));
+
+        InconsistentSagaStateException exception = assertThrows(
+                InconsistentSagaStateException.class,
+                () -> replyConsumer.deliver(
+                        replyForStep("remote-undo", MessageHeaders.FAILURE, 1)));
+
+        assertEquals("Compensation failed, nothing to do", exception.getMessage());
+        assertFalse(participantCalls().contains("A.undo"),
+                    "a failed undo must stop the saga, not be passed over");
+    }
+
+    // ------------------------------------------------------- duplicate replies
+
+    @Test
+    void reply_whenRedeliveredForAStepAlreadyPassed_shouldBeIgnored() {
+        manage(new RemoteSaga()).create(new OrderData());
+        replyConsumer.deliver(replyForStep("with-remote", MessageHeaders.SUCCESS, 1));
+        List<String> callsAfterFirstReply = participantCalls();
+
+        //the broker redelivers the same reply; the saga has moved on
+        replyConsumer.deliver(replyForStep("with-remote", MessageHeaders.SUCCESS, 1));
+
+        assertEquals(callsAfterFirstReply, participantCalls());
+    }
+
+    @Test
+    void reply_whenTheSagaHasAlreadyTerminated_shouldBeIgnored() {
+        manage(new RemoteSaga()).create(new OrderData());
+        replyConsumer.deliver(replyForStep("with-remote", MessageHeaders.SUCCESS, 1));
+        assertEquals(SagaState.TERMINATED, gateway.stored.getSagaExecutionState().getState());
+        List<String> callsAtTermination = participantCalls();
+
+        replyConsumer.deliver(reply("with-remote", MessageHeaders.SUCCESS));
+
+        assertEquals(callsAtTermination, participantCalls());
+    }
+
+    @Test
+    void reply_whenTheParticipantOmitsTheStepHeader_shouldStillBeAccepted() {
+        manage(new RemoteSaga()).create(new OrderData());
+
+        replyConsumer.deliver(reply("with-remote", MessageHeaders.SUCCESS));
+
+        assertTrue(participantCalls().contains("C.do"),
+                   "participants that do not echo the step header must keep working");
+    }
+
     // ------------------------------------------------------------------ helpers
 
     /** The trace with the adapters' noise filtered out, leaving what the saga did. */
@@ -266,6 +355,16 @@ class SagaManagerImplTests {
         headers.put(MessageHeaders.REPLY_OUTCOME, outcome);
         headers.put(MessageHeaders.REPLY_TYPE, replyType);
         return new Message(sagaType, headers, payload);
+    }
+
+    /** A reply that names the step it answers, the way a well-behaved participant does. */
+    private Message replyForStep(String sagaType, String outcome, int step) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put(MessageHeaders.SAGA_ID, "saga-1");
+        headers.put(MessageHeaders.SAGA_TYPE, sagaType);
+        headers.put(MessageHeaders.REPLY_OUTCOME, outcome);
+        headers.put(MessageHeaders.SAGA_STEP, String.valueOf(step));
+        return new Message(sagaType, headers, "{}");
     }
 
     // -------------------------------------------------------------------- fakes
@@ -366,6 +465,32 @@ class SagaManagerImplTests {
                         })
                        .withCompensation(data -> trace.add("R.undo"))
                 .step().invokeLocalParticipant(data -> record("C.do", data))
+                .build());
+        }
+    }
+
+    /**
+     * A remote step whose undo is the participant's job, followed by a local step that
+     * fails, so the saga has to unwind through the participant.
+     */
+    private class RemoteCompensationSaga extends Saga<OrderData> {
+        RemoteCompensationSaga() {
+            setSagaType("remote-undo");
+            setDefinition(
+                step().invokeLocalParticipant(data -> record("A.do", data))
+                      .withCompensation(data -> trace.add("A.undo"))
+                .step().invokeRemoteParticipant(data -> {
+                            record("R.invoke", data);
+                            return CommandWithDestination.to("order-service", "reserve-stock");
+                        })
+                       .withRemoteCompensation(data -> {
+                            trace.add("R.undo.invoke");
+                            return CommandWithDestination.to("order-service", "release-stock");
+                        })
+                .step().invokeLocalParticipant(data -> {
+                            record("C.do", data);
+                            throw new IllegalStateException("participant C refused");
+                        })
                 .build());
         }
     }

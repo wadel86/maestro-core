@@ -3,6 +3,7 @@ package io.maestro.core.saga;
 import io.maestro.common.exception.InconsistentSagaStateException;
 import io.maestro.common.reply.Message;
 import io.maestro.common.saga.instance.SagaInstance;
+import io.maestro.common.saga.instance.SagaState;
 import io.maestro.core.dsl.SagaDefinitionDsl;
 import io.maestro.core.saga.definition.SagaDefinition;
 import io.maestro.core.saga.definition.step.RemoteStep;
@@ -47,12 +48,17 @@ public abstract class Saga <D> implements SagaDefinitionDsl<D> {
 
     public StepOutcome<D> handleReply
             (SagaInstance sagaInstance, D sagaData, Message message){
-        SagaStep<D> stepInExecution = definition.getStepInExecution(sagaInstance);
-        if(!(stepInExecution instanceof RemoteStep)){
+        //a reply can answer either direction: the command that ran a step, or the
+        //compensating command that is undoing it.
+        SagaStep<D> stepAwaitingReply
+                = SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState())
+                        ? definition.getStepInCompensation(sagaInstance)
+                        : definition.getStepInExecution(sagaInstance);
+        if(!(stepAwaitingReply instanceof RemoteStep)){
             throw new InconsistentSagaStateException
                     ("Can't handle reply for local step");
         }
-        RemoteStep<D> remoteStep = (RemoteStep<D>)stepInExecution;
+        RemoteStep<D> remoteStep = (RemoteStep<D>)stepAwaitingReply;
         return remoteStep.handleReply(sagaInstance, sagaData, message);
     }
 

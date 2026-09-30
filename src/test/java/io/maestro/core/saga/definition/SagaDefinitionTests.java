@@ -285,6 +285,37 @@ class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTests.SagaD
         assertEquals("Saga is not started yet, can't get step in execution!", exception.getMessage());
     }
 
+    @Test
+    void getStepInCompensation_whenSagaIsCompensating_thenReturnsTheStepBeingUndone(){
+        //given
+        SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
+        SagaInstance sagaInstance
+                = new SagaInstance
+                ("id", "test-saga", new SagaExecutionState(2, SagaState.COMPENSATING),
+                 sagaSerializedData);
+        //when
+        SagaStep<SagaData> stepInCompensation = sagaDefinition.getStepInCompensation(sagaInstance);
+        //then
+        assertTrue(stepInCompensation instanceof RemoteStep);
+    }
+
+    @Test
+    void getStepInCompensation_whenSagaIsExecuting_thenExpectInconsistentSagaStateException(){
+        //given
+        SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
+        SagaInstance sagaInstance
+                = new SagaInstance
+                ("id", "test-saga", new SagaExecutionState(2, SagaState.EXECUTING),
+                 sagaSerializedData);
+        //when
+        InconsistentSagaStateException exception
+                = assertThrows(InconsistentSagaStateException.class,
+                               () -> sagaDefinition.getStepInCompensation(sagaInstance));
+        //then
+        assertEquals("Saga is not compensating, can't get step in compensation!",
+                     exception.getMessage());
+    }
+
     private void localParticipantAction(SagaData data){}
     private CommandWithDestination remoteParticipantAction(SagaData data){return null;}
     static class SagaData{}

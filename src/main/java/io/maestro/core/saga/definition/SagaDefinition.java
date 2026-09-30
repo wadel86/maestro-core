@@ -63,6 +63,20 @@ public class SagaDefinition<D> {
         return steps.get(sagaInstance.getSagaExecutionState().getPointer());
     }
 
+    /**
+     * The step currently being undone. While compensating, the pointer is the index of
+     * the step being unwound, so this is its counterpart to
+     * {@link #getStepInExecution(SagaInstance)} and is what routes the reply to a
+     * compensating command back to the step that sent it.
+     */
+    public SagaStep<D> getStepInCompensation(SagaInstance sagaInstance){
+        if(!SagaState.COMPENSATING.equals(sagaInstance.getSagaExecutionState().getState())){
+            throw new InconsistentSagaStateException
+                    ("Saga is not compensating, can't get step in compensation!");
+        }
+        return steps.get(sagaInstance.getSagaExecutionState().getPointer());
+    }
+
 
     public int getSize(){
         return this.steps.size();

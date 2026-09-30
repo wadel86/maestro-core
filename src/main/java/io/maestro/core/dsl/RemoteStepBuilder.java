@@ -17,6 +17,7 @@ public class RemoteStepBuilder<D> {
     private final Function<D, CommandWithDestination> remoteInvocation;
     private final Map<String, BiConsumer<D, Object>> replyHandlers = new HashMap<>();
     private Optional<Consumer<D>> compensation = Optional.empty();
+    private Optional<Function<D, CommandWithDestination>> remoteCompensation = Optional.empty();
 
     public RemoteStepBuilder
             (SagaDefinitionBuilder<D> parent, Function<D, CommandWithDestination> remoteInvocation) {
@@ -29,19 +30,44 @@ public class RemoteStepBuilder<D> {
         return this;
     }
 
+    /**
+     * Undo this step with local business logic, completing immediately.
+     *
+     * @see #withRemoteCompensation(Function)
+     */
     public RemoteStepBuilder<D> withCompensation(Consumer<D> compensation){
         this.compensation = Optional.of(compensation);
         return this;
     }
 
+    /**
+     * Undo this step by asking the participant to undo its own work: the saga sends the
+     * compensating command and waits for the reply before unwinding any further, so a
+     * failed undo stops the saga instead of being silently passed over.
+     *
+     * <p>Replies to the compensating command go through the same {@link #onReply} handlers
+     * as the forward direction, keyed by their own reply type. Takes precedence over
+     * {@link #withCompensation(Consumer)} if both are given.
+     */
+    public RemoteStepBuilder<D> withRemoteCompensation
+            (Function<D, CommandWithDestination> remoteCompensation){
+        this.remoteCompensation = Optional.of(remoteCompensation);
+        return this;
+    }
+
     public StepBuilder<D> step() {
-        this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, compensation, replyHandlers));
+        this.parent.addStep(buildStep());
         return new StepBuilder<>(this.parent);
     }
 
     public SagaDefinition<D> build() {
-        this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, compensation, replyHandlers));
+        this.parent.addStep(buildStep());
         return this.parent.build();
+    }
+
+    private RemoteStepImpl<D> buildStep() {
+        return new RemoteStepImpl<>
+                (this.remoteInvocation, compensation, remoteCompensation, replyHandlers);
     }
 
 }
