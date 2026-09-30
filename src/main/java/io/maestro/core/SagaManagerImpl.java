@@ -6,6 +6,7 @@ import io.maestro.common.exception.InconsistentSagaStateException;
 import io.maestro.common.port.ReplyConsumer;
 import io.maestro.common.port.SagaDataGateway;
 import io.maestro.common.reply.Message;
+import io.maestro.common.reply.MessageHeaders;
 import io.maestro.common.saga.instance.SagaExecutionState;
 import io.maestro.common.saga.instance.SagaInstance;
 import io.maestro.common.saga.instance.SagaSerializedData;
@@ -82,8 +83,8 @@ public class SagaManagerImpl<D> implements SagaManager<D> {
         if(!this.saga.getSagaType().equalsIgnoreCase(message.getSagaType())) {
             return;
         }
-        String sagaId = message.getHeader("Saga-ID");
-        String sagaType = message.getHeader("Saga-Type");
+        String sagaId = message.getHeader(MessageHeaders.SAGA_ID);
+        String sagaType = message.getHeader(MessageHeaders.SAGA_TYPE);
         SagaInstance sagaInstance = sagaDataGateway.findSaga(sagaId, sagaType);
         D sagaData = sagaInstance.getSerializedData().deserializeSagaData();
         StepOutcome<D> stepOutcome = saga.handleReply(sagaInstance, sagaData, message);

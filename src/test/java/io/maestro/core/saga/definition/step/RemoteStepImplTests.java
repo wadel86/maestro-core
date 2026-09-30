@@ -2,6 +2,7 @@ package io.maestro.core.saga.definition.step;
 
 import io.maestro.common.command.CommandWithDestination;
 import io.maestro.common.reply.Message;
+import io.maestro.common.reply.MessageHeaders;
 import io.maestro.common.saga.instance.SagaExecutionState;
 import io.maestro.common.saga.instance.SagaInstance;
 import io.maestro.common.saga.instance.SagaState;
@@ -24,7 +25,7 @@ class RemoteStepImplTests {
 
     private boolean compensationExecuted = false;
     private boolean replyHandlerExecuted = false;
-    private final CommandWithDestination commandWithDestination = new CommandWithDestination();
+    private final CommandWithDestination commandWithDestination = CommandWithDestination.to("order-service", "reserve-stock");
 
     @Test
     void executeStep_whenSagaIsExecuting_ShouldExecuteAction(){
@@ -74,8 +75,9 @@ class RemoteStepImplTests {
         SagaInstance sagaInstance
                 = new SagaInstance("saga-id", "saga-type", sagaExecutionState, null);
         Map<String, String> messageHeaders = new HashMap<>();
-        messageHeaders.put("reply-outcome", "failure");
-        messageHeaders.put("reply-type", "io.maestro.core.saga.definition.step.RemoteStepImplTests$Reply");
+        messageHeaders.put(MessageHeaders.REPLY_OUTCOME, MessageHeaders.FAILURE);
+        messageHeaders.put(MessageHeaders.REPLY_TYPE,
+                           "io.maestro.core.saga.definition.step.RemoteStepImplTests$Reply");
         Message replyMessage = new Message("saga-type", messageHeaders, "payload");
         //when
         try (MockedStatic<JsonMapper> utilities = Mockito.mockStatic(JsonMapper.class)) {

@@ -19,9 +19,9 @@
         <mockito.version>5.14.2</mockito.version>
     </properties>
 
-    <!-- Keeps every Jackson artifact on one version, including the jackson-core that
-         maestro-common still pins to 2.11.0: databind and core are not cross-compatible
-         across minors, and the mismatch fails at class-init, not at resolution. -->
+    <!-- Keeps jackson-core, -databind and -annotations on one version across this
+         module and whatever maestro-common brings in: they are not compatible across
+         minors, and a mismatch fails at class-init rather than at resolution. -->
     <dependencyManagement>
         <dependencies>
             <dependency>

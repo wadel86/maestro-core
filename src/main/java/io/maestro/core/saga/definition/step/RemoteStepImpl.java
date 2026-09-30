@@ -2,6 +2,7 @@ package io.maestro.core.saga.definition.step;
 
 import io.maestro.common.command.CommandWithDestination;
 import io.maestro.common.reply.Message;
+import io.maestro.common.reply.MessageHeaders;
 import io.maestro.common.saga.instance.SagaInstance;
 import io.maestro.common.saga.instance.SagaState;
 import io.maestro.common.util.JsonMapper;
@@ -47,12 +48,12 @@ public class RemoteStepImpl<D> implements RemoteStep<D> {
     @Override
     public StepOutcome<D> handleReply(
             SagaInstance sagaInstance, D data, Message message) {
-        String replyType = message.getHeader("reply-type");
-        String replyOutcome = message.getHeader("reply-outcome");
+        String replyType = message.getHeader(MessageHeaders.REPLY_TYPE);
+        String replyOutcome = message.getHeader(MessageHeaders.REPLY_OUTCOME);
         this.getReplyHandler(replyType).ifPresent(handler -> {
             this.invokeReplyHandler(handler, data, replyType, message);
         });
-        return RemoteStepOutcome.replied("success".equalsIgnoreCase(replyOutcome));
+        return RemoteStepOutcome.replied(MessageHeaders.SUCCESS.equalsIgnoreCase(replyOutcome));
     }
 
     private Optional<BiConsumer<D, Object>> getReplyHandler(String replyType) {

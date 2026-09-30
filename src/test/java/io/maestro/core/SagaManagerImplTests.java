@@ -7,6 +7,7 @@ import io.maestro.common.port.ReplyConsumer;
 import io.maestro.common.port.SagaDataGateway;
 import io.maestro.common.reply.Message;
 import io.maestro.common.reply.MessageHandler;
+import io.maestro.common.reply.MessageHeaders;
 import io.maestro.common.saga.instance.SagaExecutionState;
 import io.maestro.common.saga.instance.SagaInstance;
 import io.maestro.common.saga.instance.SagaSerializedData;
@@ -154,7 +155,7 @@ class SagaManagerImplTests {
     void reply_whenTheParticipantSucceeds_shouldRunTheRemainingStepsAndTerminate() {
         manage(new RemoteSaga()).create(new OrderData());
 
-        replyConsumer.deliver(reply("with-remote", "success"));
+        replyConsumer.deliver(reply("with-remote", MessageHeaders.SUCCESS));
 
         assertEquals(List.of("A.do", "R.invoke", "C.do"), participantCalls());
         assertEquals(SagaState.TERMINATED, gateway.stored.getSagaExecutionState().getState());
@@ -165,7 +166,7 @@ class SagaManagerImplTests {
     void reply_shouldInvokeTheHandlerRegisteredForThatReplyType() {
         manage(new RemoteSaga()).create(new OrderData());
 
-        replyConsumer.deliver(replyOfType("with-remote", "success",
+        replyConsumer.deliver(replyOfType("with-remote", MessageHeaders.SUCCESS,
                                           Reply.class.getName(), "{\"detail\":\"shipped\"}"));
 
         assertTrue(participantCalls().contains("R.onReply(shipped)"), "got: " + participantCalls());
@@ -176,7 +177,7 @@ class SagaManagerImplTests {
         manage(new RemoteSaga()).create(new OrderData());
         List<String> callsBeforeReply = participantCalls();
 
-        replyConsumer.deliver(reply("some-other-saga", "success"));
+        replyConsumer.deliver(reply("some-other-saga", MessageHeaders.SUCCESS));
 
         assertEquals(callsBeforeReply, participantCalls());
         assertEquals(SagaState.EXECUTING, gateway.stored.getSagaExecutionState().getState());
@@ -186,7 +187,7 @@ class SagaManagerImplTests {
     void reply_whenTheParticipantFails_shouldCompensateOnlyTheCompletedStepsInReverse() {
         manage(new RemoteSaga()).create(new OrderData());
 
-        replyConsumer.deliver(reply("with-remote", "failure"));
+        replyConsumer.deliver(reply("with-remote", MessageHeaders.FAILURE));
 
         // the remote step itself failed, so it has nothing to undo; A does
         assertEquals(List.of("A.do", "R.invoke", "A.undo"), participantCalls());
@@ -252,18 +253,18 @@ class SagaManagerImplTests {
 
     private Message reply(String sagaType, String outcome) {
         Map<String, String> headers = new HashMap<>();
-        headers.put("Saga-ID", "saga-1");
-        headers.put("Saga-Type", sagaType);
-        headers.put("reply-outcome", outcome);
+        headers.put(MessageHeaders.SAGA_ID, "saga-1");
+        headers.put(MessageHeaders.SAGA_TYPE, sagaType);
+        headers.put(MessageHeaders.REPLY_OUTCOME, outcome);
         return new Message(sagaType, headers, "{}");
     }
 
     private Message replyOfType(String sagaType, String outcome, String replyType, String payload) {
         Map<String, String> headers = new HashMap<>();
-        headers.put("Saga-ID", "saga-1");
-        headers.put("Saga-Type", sagaType);
-        headers.put("reply-outcome", outcome);
-        headers.put("reply-type", replyType);
+        headers.put(MessageHeaders.SAGA_ID, "saga-1");
+        headers.put(MessageHeaders.SAGA_TYPE, sagaType);
+        headers.put(MessageHeaders.REPLY_OUTCOME, outcome);
+        headers.put(MessageHeaders.REPLY_TYPE, replyType);
         return new Message(sagaType, headers, payload);
     }
 
@@ -348,7 +349,7 @@ class SagaManagerImplTests {
 
     private class RemoteSaga extends Saga<OrderData> {
 
-        private final CommandWithDestination command = new CommandWithDestination();
+        private final CommandWithDestination command = CommandWithDestination.to("order-service", "reserve-stock");
 
         RemoteSaga() {
             setSagaType("with-remote");
