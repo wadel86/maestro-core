@@ -39,13 +39,15 @@ public class SagaDefinition<D> {
             throw new InconsistentSagaStateException
                     ("Can't get steps to compensate of a non compensating saga!");
         }
-        List<SagaStep<D>> startingSteps = new ArrayList<>();
-        int previousStepIndex = sagaInstance.getSagaExecutionState().getPointer() - 1;
+        //while compensating, the pointer is the index of the next step to undo,
+        //so it is itself part of the work: unwind from there down to the first step.
+        List<SagaStep<D>> stepsToCompensate = new ArrayList<>();
+        int previousStepIndex = sagaInstance.getSagaExecutionState().getPointer();
         while (previousStepIndex > -1){
-            startingSteps.add(steps.get(previousStepIndex));
+            stepsToCompensate.add(steps.get(previousStepIndex));
             previousStepIndex--;
         }
-        return startingSteps;
+        return stepsToCompensate;
     }
 
     public SagaStep<D> getStepInExecution(SagaInstance sagaInstance){

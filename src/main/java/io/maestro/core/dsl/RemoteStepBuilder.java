@@ -16,7 +16,7 @@ public class RemoteStepBuilder<D> {
     private final SagaDefinitionBuilder<D> parent;
     private final Function<D, CommandWithDestination> remoteInvocation;
     private final Map<String, BiConsumer<D, Object>> replyHandlers = new HashMap<>();
-    private Optional<Consumer<D>> compensation;
+    private Optional<Consumer<D>> compensation = Optional.empty();
 
     public RemoteStepBuilder
             (SagaDefinitionBuilder<D> parent, Function<D, CommandWithDestination> remoteInvocation) {
@@ -35,12 +35,12 @@ public class RemoteStepBuilder<D> {
     }
 
     public StepBuilder<D> step() {
-        this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, Optional.empty(), replyHandlers));
+        this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, compensation, replyHandlers));
         return new StepBuilder<>(this.parent);
     }
 
     public SagaDefinition<D> build() {
-        this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, Optional.empty(), replyHandlers));
+        this.parent.addStep(new RemoteStepImpl<>(this.remoteInvocation, compensation, replyHandlers));
         return this.parent.build();
     }
 

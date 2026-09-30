@@ -123,8 +123,9 @@ class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTests.SagaD
     }
 
     @Test
-    void getStepsToCompensate_shouldReturnsAllExecutedSteps(){
+    void getStepsToCompensate_shouldReturnsAllExecutedStepsInReverseOrder(){
         //given
+        //while compensating the pointer is the next step to undo, so step 3 is included
         SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
         SagaInstance sagaInstance
                 = new SagaInstance
@@ -134,10 +135,43 @@ class SagaDefinitionTests implements SagaDefinitionDsl<SagaDefinitionTests.SagaD
         List<SagaStep<SagaData>> nextSteps
                 = sagaDefinition.getStepsToCompensate(sagaInstance);
         //then
-        assertEquals(3, nextSteps.size());
+        assertEquals(4, nextSteps.size());
         assertTrue(nextSteps.get(0) instanceof RemoteStep);
-        assertTrue(nextSteps.get(1) instanceof LocalStep);
+        assertTrue(nextSteps.get(1) instanceof RemoteStep);
         assertTrue(nextSteps.get(2) instanceof LocalStep);
+        assertTrue(nextSteps.get(3) instanceof LocalStep);
+    }
+
+    @Test
+    void getStepsToCompensate_shouldNotSkipTheLastCompletedStep(){
+        //given
+        SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
+        SagaInstance sagaInstance
+                = new SagaInstance
+                ("id", "test-saga", new SagaExecutionState(1, SagaState.COMPENSATING),
+                 sagaSerializedData);
+        //when
+        List<SagaStep<SagaData>> nextSteps
+                = sagaDefinition.getStepsToCompensate(sagaInstance);
+        //then
+        assertEquals(2, nextSteps.size());
+        assertTrue(nextSteps.get(0) instanceof LocalStep);
+        assertTrue(nextSteps.get(1) instanceof LocalStep);
+    }
+
+    @Test
+    void getStepsToCompensate_whenNothingRanBeforeTheFailure_thenShouldReturnsNoSteps(){
+        //given
+        SagaSerializedData sagaSerializedData = new SagaSerializedData(SagaData.class.getName(), "test");
+        SagaInstance sagaInstance
+                = new SagaInstance
+                ("id", "test-saga", new SagaExecutionState(-1, SagaState.COMPENSATING),
+                 sagaSerializedData);
+        //when
+        List<SagaStep<SagaData>> nextSteps
+                = sagaDefinition.getStepsToCompensate(sagaInstance);
+        //then
+        assertEquals(0, nextSteps.size());
     }
 
     @Test

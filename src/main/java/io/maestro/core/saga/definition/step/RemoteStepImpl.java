@@ -37,8 +37,10 @@ public class RemoteStepImpl<D> implements RemoteStep<D> {
             compensation.ifPresent(dataConsumer -> dataConsumer.accept(data));
             return new LocalStepOutcome<>(true, Optional.empty());
         }else{
+            //producing the command is itself the step's success; the participant's own
+            //verdict arrives later, through handleReply.
             CommandWithDestination commandToSend = this.remoteInvocation.apply(data);
-            return new RemoteStepOutcome<>(commandToSend);
+            return RemoteStepOutcome.dispatch(commandToSend);
         }
     }
 
@@ -50,11 +52,7 @@ public class RemoteStepImpl<D> implements RemoteStep<D> {
         this.getReplyHandler(replyType).ifPresent(handler -> {
             this.invokeReplyHandler(handler, data, replyType, message);
         });
-        if("success".equalsIgnoreCase(replyOutcome)){
-            return new RemoteStepOutcome<>(true);
-        }else{
-            return new RemoteStepOutcome<>(false);
-        }
+        return RemoteStepOutcome.replied("success".equalsIgnoreCase(replyOutcome));
     }
 
     private Optional<BiConsumer<D, Object>> getReplyHandler(String replyType) {
