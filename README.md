@@ -12,9 +12,10 @@ It orchestrates over infrastructure you already run. There is no server to opera
 engine is a library, and saga state lives in your own database behind a gateway interface.
 
 ```
-maestro-common   model and ports shared by everything
-maestro-core     this module: the engine and the definition DSL
-maestro-data-*   adapters: persistence and messaging
+maestro-common      model and ports shared by everything
+maestro-core        this module: the engine and the definition DSL
+maestro-data-jdbc   persistence with a transactional outbox
+maestro/            participant runtime, in-JVM messaging, end-to-end tests
 ```
 
 ## Defining a saga
